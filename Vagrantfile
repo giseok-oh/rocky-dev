@@ -2,35 +2,30 @@
 # vi: set ft=ruby :
 VM_LIST = {
   "rocky" => {
-    :ip => "192.168.57.10",
+    :ip => "192.168.56.3",
     :cpus => 8,
     :memory => 32_768,
-    :disksize => "200GB"
+    :disksize => "500GB"
   }
 }
 
 Vagrant.configure("2") do |config|
   VM_LIST.each do |hostname, opts|
     config.vm.define hostname do |node|
-      node.vm.box = "rockylinux/8"
+      node.vm.box = "generic/rocky8"
       node.vm.hostname = hostname
       node.vm.network :private_network, ip: opts[:ip]
-      node.vm.provision "shell", path: "../provisioning/shell/ssh.sh", args: opts[:ip]
+      node.vm.disk :disk, size: opts[:disksize], primary: true
+      node.vm.provision "shell", path: "./shell/ssh.sh", args: opts[:ip]
+      node.vm.provision "shell", path: "./shell/setup.sh"
 
       node.vm.provider "virtualbox" do |vbox|
+        vbox.customize [
+          "modifyvm", :id, "--nested-hw-virt", "on"
+        ]
         vbox.gui = false
         vbox.cpus = opts[:cpus]
         vbox.memory = opts[:memory]
-      end
-
-      node.vm.provision "ansible" do |ansible|
-        ansible.playbook = "../provisioning/playbook.yml"
-        ansible.groups = {
-          "all:children" => ["rocky"]
-        }
-        ansible.extra_vars = {
-          ansible_python_interpreter: "/usr/bin/python3"
-        }
       end
     end
   end
