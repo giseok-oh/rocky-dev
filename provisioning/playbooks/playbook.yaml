@@ -1,0 +1,105 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+    - name: "Upgrade all packages"
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
+    - name: "Install prerequisites"
+      ansible.builtin.dnf:
+        name:
+          - git
+          - firefox
+          - dnf-utils
+          - epel-release
+          - kernel-devel
+
+    - name: "Install XFCE4 requisites"
+      ansible.builtin.dnf:
+        name:
+          - "@Xfce"
+          - "@base-x"
+        enablerepo:
+          - epel-release
+          - crb
+
+    - name: "Default interface configuration"
+      ansible.builtin.shell: |
+        systemctl set-default graphical
+        echo "exec /usr/bin/xfce4-session" >> ~/.xinitrc
+
+    - name: "Install XRDP and Xorg requisites"
+      ansible.builtin.dnf:
+        name:
+          - xrdp
+          - xorgxrdp
+          - dbus-x11
+        enablerepo: "epel-release"
+
+    - name: "Launch dbus"
+      ansible.builtin.command:
+        cmd: dbus-launch
+
+    - name: "Default graphic configuration"
+      ansible.builtin.shell: |
+        systemctl set-default graphical
+        systemctl isolate graphical
+
+    - name: "startwm.sh configuration for XRDP"
+      ansible.builtin.copy:
+        src: ../files/startwm.sh
+        dest: /usr/libexec/xrdp/startwm.sh
+
+    - name: "Enable XRDP"
+      ansible.builtin.command:
+        cmd: systemctl enable --now xrdp
+
+    - name: "Import VirtualBox GPG Key"
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+
+    - name: "Install VirtualBox"
+      ansible.builtin.dnf:
+        name: "https://download.virtualbox.org/virtualbox/7.1.10/VirtualBox-7.1-7.1.10_169112_el8-1.x86_64.rpm"
+        state: present
+
+    - name: "Add HashiCorp Repository"
+      ansible.builtin.get_url:
+        url: https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+        dest: /etc/yum.repos.d/hashicorp.repo
+        mode: "0664"
+
+    - name: "Install Vagrant"
+      ansible.builtin.dnf:
+        name: vagrant
+
+    - name: "Install Ansible"
+      ansible.builtin.dnf:
+        name: ansible
+        enablerepo: "epel-release"
+
+    - name: "Add Visual Studio Code Repository"
+      ansible.builtin.yum_repository:
+        name: code
+        description: Visual Studio Code
+        baseurl: https://packages.microsoft.com/yumrepos/vscode
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+    
+    - name: "Install Visual Studio Code"
+      ansible.builtin.dnf:
+        name: code
+
+    - name: Allow ports
+      ansible.builtin.shell: |
+        sudo firewall-cmd --zone=public --add-port=3389/tcp --permanent
+        sudo firewall-cmd --reload
+
+    - name: "Reboot Virtual Machine"
+      ansible.builtin.reboot:
+        connect_timeout: 600

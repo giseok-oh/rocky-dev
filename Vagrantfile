@@ -1,8 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 VM_LIST = {
-  "rocky" => {
-    :ip => "192.168.56.3",
+  "rocky810" => {
+    :ip => "192.168.56.10",
     :cpus => 8,
     :memory => 32_768,
     :disksize => "500GB"
@@ -10,14 +10,25 @@ VM_LIST = {
 }
 
 Vagrant.configure("2") do |config|
+  # Get Virtual Machine names
+  vm_names = VM_LIST.keys
+
+  # Get IP list
+  ips = VM_LIST.map { |_, config| config[:ip] }
+
+  # Define groups
+  group_hash = vm_names.each_with_object({}) do |hostname, hash|
+    hash["group_#{hostname}"] = [hostname]
+  end
+  group_hash["all:children"] = vm_names
+
   VM_LIST.each do |hostname, opts|
     config.vm.define hostname do |node|
-      node.vm.box = "generic/rocky8"
+      node.vm.box = "bento/rockylinux-8.10"
       node.vm.hostname = hostname
       node.vm.network :private_network, ip: opts[:ip]
       node.vm.disk :disk, size: opts[:disksize], primary: true
-      node.vm.provision "shell", path: "./shell/ssh.sh", args: opts[:ip]
-      node.vm.provision "shell", path: "./shell/setup.sh"
+      node.vm.synced_folder '.', '/vagrant', disabled: true      
 
       node.vm.provider "virtualbox" do |vbox|
         vbox.customize [
@@ -28,5 +39,21 @@ Vagrant.configure("2") do |config|
         vbox.memory = opts[:memory]
       end
     end
+  end
+
+  # SSH settings
+  config.vm.provision "shell", path: "./provisioning/shell/ssh.sh", args: ips
+
+  # Install prerequisites
+  config.vm.provision "shell", path: "./provisioning/shell/prerequisites.sh"
+
+  # Run playbook
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "./provisioning/playbooks/playbook.yaml"
+    ansible.groups = group_hash
+    ansible.extra_vars = {
+      ansible_python_interpreter: "/usr/bin/python3"
+    }
+    ansible.compatibility_mode = "2.0"
   end
 end
