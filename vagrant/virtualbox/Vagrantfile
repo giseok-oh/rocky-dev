@@ -42,14 +42,14 @@ Vagrant.configure("2") do |config|
   end
 
   # SSH settings
-  config.vm.provision "shell", path: "./provisioning/shell/ssh.sh", args: ips
+  config.vm.provision "shell", path: "../../provisioning/shell/ssh.sh", args: ips
 
   # Install prerequisites
-  config.vm.provision "shell", path: "./provisioning/shell/prerequisites.sh"
+  config.vm.provision "shell", path: "../../provisioning/shell/prerequisites.sh"
 
   # Run playbook
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "./provisioning/playbooks/playbook.yaml"
+    ansible.playbook = "../../provisioning/playbooks/playbook.yaml"
     ansible.groups = group_hash
     ansible.extra_vars = {
       ansible_python_interpreter: "/usr/bin/python3"
