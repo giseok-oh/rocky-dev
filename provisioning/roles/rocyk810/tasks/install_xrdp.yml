@@ -1,0 +1,54 @@
+---
+
+- name: "Install XFCE4 requisites"
+  ansible.builtin.dnf:
+    name:
+      - "@Xfce"
+      - "@base-x"
+    enablerepo:
+      - epel-release
+      - crb
+  become: true
+
+- name: "Default interface configuration"
+  ansible.builtin.shell: |
+    systemctl set-default graphical
+    echo "exec /usr/bin/xfce4-session" >> ~/.xinitrc
+  become: true
+
+- name: "Install XRDP and Xorg requisites"
+  ansible.builtin.dnf:
+    name:
+      - xrdp
+      - xorgxrdp
+      - dbus-x11
+    enablerepo: "epel-release"
+  become: true
+
+- name: "Launch dbus"
+  ansible.builtin.command:
+    cmd: dbus-launch
+  become: true
+
+- name: "Default graphic configuration"
+  ansible.builtin.shell: |
+    systemctl set-default graphical
+    systemctl isolate graphical
+  become: true
+
+- name: "startwm.sh configuration for XRDP"
+  ansible.builtin.copy:
+    src: ../../files/startwm.sh
+    dest: /usr/libexec/xrdp/startwm.sh
+  become: true
+
+- name: "Enable XRDP"
+  ansible.builtin.command:
+    cmd: systemctl enable --now xrdp
+  become: true
+
+- name: Allow ports
+  ansible.builtin.shell: |
+    firewall-cmd --zone=public --add-port=3389/tcp --permanent
+    firewall-cmd --reload
+  become: true

@@ -1,0 +1,23 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+    - name: "Upgrade all packages"
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
+    - name: "Install prerequisites"
+      ansible.builtin.dnf:
+        name:
+          - git
+          - firefox
+          - dnf-utils
+          - epel-release
+          - kernel-devel
+          - google-noto-sans-cjk-ttc-fonts
+
+- hosts: rocky810
+  roles: 
+    - role: ../roles/rocky810

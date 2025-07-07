@@ -1,0 +1,23 @@
+---
+
+- name: "Install Xrdp"
+  import_tasks: ./install_xrdp.yml
+
+- name: "Install Vagrant"
+  import_tasks: ./install_vagrant.yml
+
+- name: "Install Ansible"
+  import_tasks: ./install_ansible.yml
+
+- name: "Install Visual Studio Code"
+  import_tasks: ./install_vscode.yml
+
+- name: "Install Docker"
+  import_tasks: ./install_docker.yml
+
+- name: "Install Libvirt"
+  import_tasks: ./install_libvirt.yml
+
+- name: "Reboot Virtual Machine"
+  ansible.builtin.reboot:
+    connect_timeout: 600

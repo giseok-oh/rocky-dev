@@ -1,0 +1,5 @@
+- name: "Install Ansible"
+  ansible.builtin.dnf:
+    name: ansible
+    enablerepo: "epel-release"
+  become: true

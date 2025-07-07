@@ -1,0 +1,24 @@
+---
+
+- name: "Install Libvirt"
+  ansible.builtin.dnf:
+    name:
+      - bridge-utils
+      - virt-top
+      - libguestfs-tools
+      - virt-viewer
+      - qemu-kvm
+      - libvirt
+      - virt-manager
+      - virt-install
+  become: true
+
+- name: "Add current user to libvirt group"
+  ansible.builtin.command:
+    cmd: usermod -a -G libvirt $USER
+  become: true
+
+- name: "Enable Libvirt"
+  ansible.builtin.command:
+    cmd: systemctl enable --now libvirtd
+  become: true

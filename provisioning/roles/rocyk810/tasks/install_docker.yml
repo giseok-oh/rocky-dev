@@ -1,0 +1,36 @@
+---
+- name: "Remove Podman"
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - buildah
+      - runc
+    state: absent
+  become: true
+
+- name: "Add Docker Repository"
+  ansible.builtin.command:
+    cmd: dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+  become: true
+
+- name: "Install Docker Engine"
+  ansible.builtin.dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    update_cache: true
+    state: present
+  become: true
+
+- name: "Enable Docker"
+  ansible.builtin.command:
+    cmd: systemctl --now enable docker
+  become: true
+  
+- name: "Add current user to docker group"
+  ansible.builtin.command:
+    cmd: sudo usermod -a -G docker $USER
+  become: true

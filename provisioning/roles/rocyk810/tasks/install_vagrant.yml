@@ -1,0 +1,13 @@
+---
+
+- name: "Add HashiCorp Repository"
+  ansible.builtin.get_url:
+    url: https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+    dest: /etc/yum.repos.d/hashicorp.repo
+    mode: "0664"
+  become: true
+
+- name: "Install Vagrant"
+  ansible.builtin.dnf:
+    name: vagrant
+  become: true
